@@ -82,7 +82,7 @@ A = forcas(A);
 P = eye(n) (:, vetor_perm);
 # spy(P*A);
 
-coisas;
+proj1;
 [ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(P*A)
 [ENVL,ENVlinL,ENVcolL,DIAGL,ENVU,ENVcolU,ENVlinU,DIAGU] = LUENVELOPE(ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins,DIAG)
 

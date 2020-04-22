@@ -1,4 +1,4 @@
-1; 
+1;
 
 function [ENV, ENVcol, ENVlin] = env(A)
   %ENVELOPEcoluna ENVELOPEcoluna ENVELOPEcoluna
@@ -21,7 +21,7 @@ function [ENV, ENVcol, ENVlin] = env(A)
       if (A(i,j) != 0)
         auxLin = i;
         break;
-      endif   %NAO CABE TUDO
+      endif
     endfor
     if (auxLin != 0)
       for k = auxLin:j-1
@@ -50,8 +50,16 @@ function [ENV, ENVcol, ENVlin] = env(A)
 endfunction
   
   
+function [ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(A)
+  [ENVi, ENVlini, ENVcoli] = env(A');
+  [ENVs, ENVcols, ENVlins] = env(A);
+  for i = 1:length(A)
+    DIAG(i) = A(i,i);
+  endfor
+endfunction
   
-  
+
+% TODO: essa função não tá sendo usada
 function [x] = sistema_linearCol(U,b)
   %SISTEMA LINEAR SISTEMA LINEAR
   [ENV, ENVcol, ENVlin] = env(U);
@@ -69,9 +77,98 @@ function [x] = sistema_linearCol(U,b)
 endfunction
 
 
+function [x] = sistema_linearLin(ENV, ENVlin, ENVcol, DIAG, b)
+  %SISTEMA LINEAR SISTEMA LINEAR
+  n = length(DIAG);
+  x = zeros(n,1);
+  for i = 1:n 
+    s = b(i);
+    if ENVlin(i)!=ENVlin(i+1)
+      for j = ENVlin(i):ENVlin(i+1)-1 
+        s -=  x(ENVcol(j))*ENV(j);
+      endfor
+    endif
+    x(i) = s/DIAG(i);
+  endfor
+  %SISTEMA LINEAR SISTEMA LINEAR
+endfunction
 
 
+function [b,c] = theFinder(ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, i);
+  k = i;
+  b = zeros(i);
+  c = zeros(i);
+  for j = ENVcols(i+2)-1:-1:ENVcols(i+1)
+    b(k) = ENVs(j);
+    k = k-1;  
+  endfor
+  k = i;
+  for j = ENVlini(i+2)-1:-1:ENVlini(i+1)
+    c(k) = ENVi(j);
+    k = k-1; 
+  endfor  
+endfunction
 
+
+function [ENV,ENVcol,ENVlin] = newColumn(ENV, ENVcol, ENVlin, b)
+  i = 1;
+  while(i <= length(b) && b(i) == 0  ) 
+    i = i+1;
+  endwhile
+  aux = length(ENVcol);
+  for j = 0:length(b)-i
+    ENV(ENVcol(aux)+j) = b(i+j);
+    ENVlin(ENVcol(aux)+j) = i+j;
+  endfor
+  ENVcol(aux+1) = ENVcol(aux)+length(b)-i+1;
+endfunction 
+
+
+function [ENVL,ENVlinL,ENVcolL,DIAGL,ENVU,ENVcolU,ENVlinU,DIAGU] = LUENVELOPE(ENViA, ENVliniA, ENVcoliA, ENVsA, ENVcolsA, ENVlinsA, DIAGA)
+  ENVlinL = [1 1];
+  n = length(DIAGA);
+  DIAGL(1) = 1;
+  DIAGU(1) = DIAGA(1);
+  ENVcolU = [1 1];
+  ENVL = 0;
+  ENVcolL = 0;
+  ENVU = 0; 
+  ENVlinU = 0;
+  ENVcolU = [1 1];
+  
+  for i = 1:n-1
+    [b,c] = theFinder(ENViA, ENVliniA, ENVcoliA, ENVsA, ENVcolsA, ENVlinsA, i);
+    u = sistema_linearLin(ENVL, ENVlinL, ENVcolL,DIAGL,b);
+    l = sistema_linearLin(ENVU, ENVcolU, ENVlinU,DIAGU,c);
+    [ENVL,ENVlinL,ENVcolL] = newColumn(ENVL,ENVlinL,ENVcolL,l);
+    [ENVU,ENVcolU,ENVlinU] = newColumn(ENVU,ENVcolU,ENVlinU,u);
+    DIAGL(i+1) = 1;
+    s = 0;
+    for k = 1:length(l)
+      s = s + l(k)*u(k);
+    endfor
+    DIAGU(i+1) = DIAGA(i+1)-s;
+  endfor
+
+endfunction
+
+
+% essa função é pra quê? hsdfhksd
+function M = sparsity(U)
+  n = length(U);
+  for i = 1:n
+    for j = 1:n
+      if (U(i,j) == 0)
+        M(i,j) = 0;
+      else
+        M(i,j) = 1;
+      endif
+    endfor
+  endfor
+endfunction
+
+
+% LU por pivoteamento (?)
 function [L,U,P] = lupp(A)
   n = length(A);
   p = (1:n)';
@@ -94,114 +191,7 @@ function [L,U,P] = lupp(A)
 endfunction
 
 
-function [ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(U)
-  [ENVi, ENVlini, ENVcoli] = env(U');
-  [ENVs, ENVcols, ENVlins] = env(U);
-  for i = 1:length(U)
-  DIAG(i) = U(i,i);
-  endfor
-endfunction
-
-function [x] = sistema_linearLin(ENV, ENVlin, ENVcol,DIAG,b)
-  %SISTEMA LINEAR SISTEMA LINEAR
-  n = length(DIAG);
-  x = zeros(n,1);
-  for i = 1:n 
-    s = b(i);
-    if ENVlin(i)!=ENVlin(i+1)
-      for j = ENVlin(i):ENVlin(i+1)-1 
-        s -=  x(ENVcol(j))*ENV(j);
-      endfor
-    endif
-    x(i) = s/DIAG(i);
-  endfor
-  %SISTEMA LINEAR SISTEMA LINEAR
-endfunction
-
-function [b,c] = theFinder( ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, i);
-  k = i;
-  b = zeros(i);
-  c = zeros(i);
-  for j = ENVcols(i+2)-1:-1:ENVcols(i+1)
-    b(k) = ENVs(j);
-    k = k-1;  
-  endfor
-  k = i;
-  for j = ENVlini(i+2)-1:-1:ENVlini(i+1)
-    c(k) = ENVi(j);
-    k = k-1; 
-  endfor  
-endfunction
-
-function [ENV,ENVcol,ENVlin] = newColumn(ENV,ENVcol,ENVlin,b)
-  i = 1;
-  while(i <= length(b) && b(i) == 0  ) 
-    i = i+1;
-  endwhile
-  aux = length(ENVcol);
-  for j = 0:length(b)-i
-    ENV(ENVcol(aux)+j) = b(i+j);
-    ENVlin(ENVcol(aux)+j) = i+j;
-  endfor
-  ENVcol(aux+1) = ENVcol(aux)+length(b)-i+1;
-endfunction 
-
-
-
-function [ENVL,ENVlinL,ENVcolL,DIAGL,ENVU,ENVcolU,ENVlinU,DIAGU] = LUENVELOPE(ENViA, ENVliniA, ENVcoliA, ENVsA, ENVcolsA, ENVlinsA,DIAGA)
-  ENVlinL = [1 1]; %dps eu tiro
-  n = length(DIAGA); 
-  DIAGL(1) = 1;
-  DIAGU(1) = DIAGA(1); %HORA DE COMPILAR
-  ENVcolU = [1 1];
-  ENVL = 0;
-  ENVcolL = 0;
-  ENVU = 0; 
-  ENVlinU = 0;
-  ENVcolU = [1 1];
-  
-  for i = 1:n-1
-    [b,c] = theFinder(ENViA, ENVliniA, ENVcoliA, ENVsA, ENVcolsA, ENVlinsA, i);
-    u = sistema_linearLin(ENVL, ENVlinL, ENVcolL,DIAGL,b);
-    l = sistema_linearLin(ENVU, ENVcolU, ENVlinU,DIAGU,c); %voltei
-    [ENVL,ENVlinL,ENVcolL] = newColumn(ENVL,ENVlinL,ENVcolL,l);
-    [ENVU,ENVcolU,ENVlinU] = newColumn(ENVU,ENVcolU,ENVlinU,u);
-    DIAGL(i+1) = 1;
-    s = 0;
-    for k = 1:length(l)
-      s = s + l(k)*u(k);
-    endfor
-    DIAGU(i+1) = DIAGA(i+1)-s; %PRONTO
-  endfor
-  %como comenta em bloco aqui?
-  
-  
-%  U = zeros(length(DIAGU),length(DIAGU));
-%   for j = 1:length(ENVcolU)-1
-%      for k = ENVcolU(j): ENVcolU(j+1)-1
-%    U(ENVlinU(k), j) = ENVU(k);  
-%    endfor
-%  endfor %isso roda? vou testar
-%  
-%  for i = 1:length(DIAGU)
-%    U(i,i) = DIAGU(i);
-%  endfor
-%  U
-endfunction
-
-function M = sparsity(U)
-  n = length(U);
-  for i = 1:n
-    for j = 1:n
-      if (U(i,j) == 0)
-        M(i,j) = 0;
-      else
-        M(i,j) = 1;
-      endif
-    endfor
-  endfor
-endfunction
-
+% LU sem pivoteamento
 function [L,U] = lusp(M)
   n = length(M);
   U = M;
@@ -213,4 +203,3 @@ function [L,U] = lusp(M)
     endfor
   endfor
 endfunction
-$PRONTOOOOOO

@@ -75,9 +75,9 @@ endfunction
 % Constroi a matriz a partir de seu envelope
 function M = constroi_por_envelope(DIAG, ENV, ENVcol, ENVlin)
   M = zeros(length(DIAG));
-   for j = 1:length(ENVcol)-1
-      for k = ENVcol(j): ENVcol(j+1)-1
-    M(ENVlin(k), j) = ENV(k);  
+  for j = 1:length(ENVcol)-1
+    for k = ENVcol(j): ENVcol(j+1)-1
+      M(ENVlin(k), j) = ENV(k);  
     endfor
   endfor
   
@@ -86,7 +86,7 @@ function M = constroi_por_envelope(DIAG, ENV, ENVcol, ENVlin)
   endfor
 endfunction
 
-
+  
 % Resolve sistema linear por colunas
 function x = sistema_linear_col(ENV, ENVcol, ENVlin, DIAG, b)
   n = length(DIAG);

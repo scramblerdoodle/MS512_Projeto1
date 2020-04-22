@@ -83,7 +83,7 @@ function M = constroi_por_envelope(DIAG, ENV, ENVcol, ENVlin)
 endfunction
 
 
-function [x] = sistema_linearCol(ENV, ENVcol, ENVlin, DIAG, b)
+function x = sistema_linear_col(ENV, ENVcol, ENVlin, DIAG, b)
   %SISTEMA LINEAR SISTEMA LINEAR
   n = length(DIAG);
   x = zeros(n,1);
@@ -99,7 +99,7 @@ function [x] = sistema_linearCol(ENV, ENVcol, ENVlin, DIAG, b)
 endfunction
 
 
-function [x] = sistema_linearLin(ENV, ENVlin, ENVcol, DIAG, b)
+function x = sistema_linear_lin(ENV, ENVlin, ENVcol, DIAG, b)
   %SISTEMA LINEAR SISTEMA LINEAR
   n = length(DIAG);
   x = zeros(n,1);
@@ -135,6 +135,14 @@ L = constroi_por_envelope(DIAGL, ENVL, ENVlinL, ENVcolL)'
 # spy(L);
 
 b = monta_b(n);
-P*b
 
-# Falta fazer LU = Pb
+# Agora calculando LU = Pb
+# Ly = b
+y = sistema_linear_lin(ENVL, ENVlinL, ENVcolL, DIAGL, P*b);
+
+# Ux = y
+x = sistema_linear_col(ENVU, ENVcolU, ENVlinU, DIAGU, y)
+
+# Checando se a solução do sistema deu certo
+A*x
+b

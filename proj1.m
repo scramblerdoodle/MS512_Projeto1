@@ -1,55 +1,76 @@
 1;
 
+%{
+  Função que monta o envelope da parte superior de uma matriz A por colunas
+  
+  INPUT: Matriz A
+  OUTPUT: ENV, ENVcol e ENVlin de A
+  
+  (note que trocando os papéis de ENVcol e ENVlin, e aplicando em A transposto,
+  temos o envelope da parte inferior de uma matriz A por linhas)
+%}
 function [ENV, ENVcol, ENVlin] = env(A)
-  %ENVELOPEcoluna ENVELOPEcoluna ENVELOPEcoluna
   n = length(A);
-  aux = 0;
-  count = 0;
-  first = 0;
-  charge = 1;
-  auxLin = 0;
+  auxLin = 0; % Variável que guarda o primeiro número não-nulo de uma coluna
+  count = 0;  % Contador para os índices usados em ENV e ENVlin
+  first = 0;  % Índice do primeiro número não-nulo em uma coluna
+  charge = 1; % "Carga" que acumula cada vez que temos uma coluna nula, pois os índices repetem em ENVcol nesse caso
+  
   ENV = ENVlin = 0;
-  ENVcol = [1 1];
-
-  %ENV = zeros(1,floor((n*n)/2-n));
   ENVcol = zeros(1,n+1);
-  %ENVlin = zeros(1,floor((n*n/2)-n));
 
 
   for j = 2:n
+
+    % Encontra o primeiro número não-nulo da parte superior da coluna j
     for i = 1:j-1
       if (A(i,j) != 0)
         auxLin = i;
         break;
       endif
     endfor
+
+    % Se for uma linha não-nula, salva todos os valores (a partir do primeiro número não-nulo) no envelope
     if (auxLin != 0)
       for k = auxLin:j-1
         count++;
         if(k == auxLin)
-        first = count;
+          first = count;
         endif
         ENV(count) = A(k,j); 
         ENVlin(count) = k;
       endfor
       
+      % Monta o ENVcol
       ENVcol(j) = first;
       for k = j+1:n+1
         ENVcol(k) = j-auxLin+ENVcol(j);
       endfor
+
       while(charge>0)
         ENVcol(j-charge) = first;
         charge--;
       endwhile
+
     else
       charge++;
+
     endif
+    
+    % Reseta auxLin
     auxLin = 0;
   endfor
-  %ENVELOPEcoluna ENVELOPEcoluna ENVELOPEcoluna
 endfunction
-  
-  
+
+
+%{ 
+  Função que monta os envelopes inferiores, envelopes superiores e a diagonal de A
+
+  INPUT: Matriz A
+  OUTPUT: ENV_inferior, ENVlin_inferior, ENVcol_inferior,
+          ENV_superior, ENVcol_superior, ENVlin_superior,
+          DIAG
+%}
 function [ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(A)
   [ENVi, ENVlini, ENVcoli] = env(A');
   [ENVs, ENVcols, ENVlins] = env(A);
@@ -59,26 +80,25 @@ function [ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(A)
 endfunction
   
 
-% TODO: essa função não tá sendo usada
-function [x] = sistema_linearCol(U,b)
-  %SISTEMA LINEAR SISTEMA LINEAR
-  [ENV, ENVcol, ENVlin] = env(U);
-  n = length(U);
+% Solução de sistema linear por colunas a partir de envelopes
+% TODO: não tá sendo usada aqui, só na outra, n sei se tem problema
+% TODO: na real eles fazem a mesma coisa só que troca envlin por e todos os envelopes de L e de Unvcol né mas foda-se
+function [x] = sistema_linearCol(ENV, ENVcol, ENVlin, DIAG, b)
+  n = length(DIAG);
   x = zeros(n,1);
   for i = n:-1:1
-    x(i) = b(i)/U(i,i);
-    if ENVcol(i)!=ENVcol(i+1)
+    x(i) = b(i)/DIAG(i);
+    if ENVcol(i) != ENVcol(i+1)
       for j = ENVcol(i):ENVcol(i+1)-1
         b(ENVlin(j)) -=  x(i)*ENV(j);
       endfor
     endif
   endfor
-  %SISTEMA LINEAR SISTEMA LINEAR
 endfunction
 
 
+% Solução de sistema linear por linhas a partir de envelopes
 function [x] = sistema_linearLin(ENV, ENVlin, ENVcol, DIAG, b)
-  %SISTEMA LINEAR SISTEMA LINEAR
   n = length(DIAG);
   x = zeros(n,1);
   for i = 1:n 
@@ -90,14 +110,20 @@ function [x] = sistema_linearLin(ENV, ENVlin, ENVcol, DIAG, b)
     endif
     x(i) = s/DIAG(i);
   endfor
-  %SISTEMA LINEAR SISTEMA LINEAR
 endfunction
 
 
+%{
+  Encontra os 'subvetores' b e c na decomposição explicada no exercício 5
+
+  INPUT: Envelopes inferiores e superiores de uma matriz, e o índice i que estamos analisando
+  OUTPUT: Vetores b e c, usados em LUENVELOPE
+%}
 function [b,c] = theFinder(ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, i);
   k = i;
   b = zeros(i);
   c = zeros(i);
+
   for j = ENVcols(i+2)-1:-1:ENVcols(i+1)
     b(k) = ENVs(j);
     k = k-1;  
@@ -110,9 +136,10 @@ function [b,c] = theFinder(ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, i);
 endfunction
 
 
+% Adiciona uma nova coluna b ao envelope
 function [ENV,ENVcol,ENVlin] = newColumn(ENV, ENVcol, ENVlin, b)
   i = 1;
-  while(i <= length(b) && b(i) == 0  ) 
+  while(i <= length(b) && b(i) == 0) 
     i = i+1;
   endwhile
   aux = length(ENVcol);
@@ -123,7 +150,18 @@ function [ENV,ENVcol,ENVlin] = newColumn(ENV, ENVcol, ENVlin, b)
   ENVcol(aux+1) = ENVcol(aux)+length(b)-i+1;
 endfunction 
 
+%{
+  Algoritmo que realiza todo o envelope da decomposição LU a partir dos envelopes de uma matriz A
 
+  INPUT:  ENV_inferior_A, ENVlin_inferior_A, ENVcol_inferior_A,
+          ENV_superior_A, ENVcol_superior_A, ENVlin_superior_A,
+          DIAG_A
+
+  OUTPUT: todos os envelopes de L e de U
+    i.e.  ENV_L, ENVlin_L, ENVcol_L, DIAG_L,
+          ENV_U, ENVcol_U, ENVlin_U, DIAG_U 
+
+%}
 function [ENVL,ENVlinL,ENVcolL,DIAGL,ENVU,ENVcolU,ENVlinU,DIAGU] = LUENVELOPE(ENViA, ENVliniA, ENVcoliA, ENVsA, ENVcolsA, ENVlinsA, DIAGA)
   ENVlinL = [1 1];
   n = length(DIAGA);

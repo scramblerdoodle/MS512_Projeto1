@@ -1,6 +1,4 @@
-n = 13;
-A=zeros(n);
-vetor_perm = [2 3 1 4 5 7 6 9 10 11 8 12 13];
+clear, clc;
 
 function A = forcas(A)
   alpha = 1/sqrt(2);
@@ -64,6 +62,13 @@ function A = forcas(A)
   A(13,12) = -alpha;
 endfunction
 
+function b = monta_b(n)
+  b = zeros(n,1);
+  b(2) = 10;
+  b(8) = 15;
+  b(10) = 20;
+endfunction
+
 function M = constroi_por_envelope(DIAG, ENV, ENVcol, ENVlin)
   M = zeros(length(DIAG));
    for j = 1:length(ENVcol)-1
@@ -77,14 +82,50 @@ function M = constroi_por_envelope(DIAG, ENV, ENVcol, ENVlin)
   endfor
 endfunction
 
-A = forcas(A);
+
+function [x] = sistema_linearCol(ENV, ENVcol, ENVlin, DIAG, b)
+  %SISTEMA LINEAR SISTEMA LINEAR
+  n = length(DIAG);
+  x = zeros(n,1);
+  for i = n:-1:1
+    x(i) = b(i)/DIAG(i);
+    if ENVcol(i) != ENVcol(i+1)
+      for j = ENVcol(i):ENVcol(i+1)-1
+        b(ENVlin(j)) -=  x(i)*ENV(j);
+      endfor
+    endif
+  endfor
+  %SISTEMA LINEAR SISTEMA LINEAR
+endfunction
+
+
+function [x] = sistema_linearLin(ENV, ENVlin, ENVcol, DIAG, b)
+  %SISTEMA LINEAR SISTEMA LINEAR
+  n = length(DIAG);
+  x = zeros(n,1);
+  for i = 1:n 
+    s = b(i);
+    if ENVlin(i)!=ENVlin(i+1)
+      for j = ENVlin(i):ENVlin(i+1)-1 
+        s -=  x(ENVcol(j))*ENV(j);
+      endfor
+    endif
+    x(i) = s/DIAG(i);
+  endfor
+  %SISTEMA LINEAR SISTEMA LINEAR
+endfunction
+
+n = 13;
+A = forcas(zeros(n));
 # spy(A);
+
+vetor_perm = [2 3 1 4 5 7 6 9 10 11 8 12 13];
 P = eye(n) (:, vetor_perm);
 # spy(P*A);
 
 proj1;
-[ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(P*A)
-[ENVL,ENVlinL,ENVcolL,DIAGL,ENVU,ENVcolU,ENVlinU,DIAGU] = LUENVELOPE(ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins,DIAG)
+[ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins, DIAG] = envelope(P*A);
+[ENVL,ENVlinL,ENVcolL,DIAGL,ENVU,ENVcolU,ENVlinU,DIAGU] = LUENVELOPE(ENVi, ENVlini, ENVcoli, ENVs, ENVcols, ENVlins,DIAG);
 
 
 U = constroi_por_envelope(DIAGU, ENVU, ENVcolU, ENVlinU)
@@ -92,3 +133,8 @@ U = constroi_por_envelope(DIAGU, ENVU, ENVcolU, ENVlinU)
 
 L = constroi_por_envelope(DIAGL, ENVL, ENVlinL, ENVcolL)'
 # spy(L);
+
+b = monta_b(n);
+P*b
+
+# Falta fazer LU = Pb

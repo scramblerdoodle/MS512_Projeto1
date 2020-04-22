@@ -1,6 +1,6 @@
 clear, clc;
 
-% Monta o sistema linear inicial da questão 6
+% Monta o sistema linear inicial da questao 6
 function [A, b] = monta_sistema(n)
   A = zeros(n);
   b = zeros(n,1);
@@ -8,8 +8,8 @@ function [A, b] = monta_sistema(n)
   alpha = 1/sqrt(2);
   
   %{ 
-    i = número da equação
-    j = variável associada
+    i = numero da equacao
+    j = variavel associada
   %}
   
   % f2 - f6 = 0
@@ -114,5 +114,4 @@ y = sistema_linearLin(ENVL, ENVlinL, ENVcolL, DIAGL, P*b);
 x = sistema_linearCol(ENVU, ENVcolU, ENVlinU, DIAGU, y)
 
 % Checando se a solução do sistema deu certo
-A*x
-b
+norm(A*x-b)

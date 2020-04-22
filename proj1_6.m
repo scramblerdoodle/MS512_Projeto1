@@ -86,37 +86,6 @@ function M = constroi_por_envelope(DIAG, ENV, ENVcol, ENVlin)
   endfor
 endfunction
 
-  
-% Resolve sistema linear por colunas
-function x = sistema_linear_col(ENV, ENVcol, ENVlin, DIAG, b)
-  n = length(DIAG);
-  x = zeros(n,1);
-  for i = n:-1:1
-    x(i) = b(i)/DIAG(i);
-    if ENVcol(i) != ENVcol(i+1)
-      for j = ENVcol(i):ENVcol(i+1)-1
-        b(ENVlin(j)) -=  x(i)*ENV(j);
-      endfor
-    endif
-  endfor
-endfunction
-
-
-% Resolve sistema linear por linhas
-function x = sistema_linear_lin(ENV, ENVlin, ENVcol, DIAG, b)
-  n = length(DIAG);
-  x = zeros(n,1);
-  for i = 1:n 
-    s = b(i);
-    if ENVlin(i)!=ENVlin(i+1)
-      for j = ENVlin(i):ENVlin(i+1)-1 
-        s -=  x(ENVcol(j))*ENV(j);
-      endfor
-    endif
-    x(i) = s/DIAG(i);
-  endfor
-endfunction
-
 n = 13;
 [A,b] = monta_sistema(n);
 % spy(A);
@@ -139,10 +108,10 @@ L = constroi_por_envelope(DIAGL, ENVL, ENVlinL, ENVcolL)'
 
 % Agora calculemos LU = Pb
 % Ly = b
-y = sistema_linear_lin(ENVL, ENVlinL, ENVcolL, DIAGL, P*b);
+y = sistema_linearLin(ENVL, ENVlinL, ENVcolL, DIAGL, P*b);
 
 % Ux = y
-x = sistema_linear_col(ENVU, ENVcolU, ENVlinU, DIAGU, y)
+x = sistema_linearCol(ENVU, ENVcolU, ENVlinU, DIAGU, y)
 
 % Checando se a solução do sistema deu certo
 A*x

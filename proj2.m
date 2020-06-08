@@ -5,8 +5,7 @@ for i = 0:20
    b(i+1,1)=exp(sin(6*i*0.05));
 endfor
 A=vander(x,11);
-%A=vander(groelandia(1:183,1)-2002.29,21);
-%b=groelandia(:,2);
+
 %Método 1 Cholesky
 R1=chol(A'*A);
 opts.LT=true;

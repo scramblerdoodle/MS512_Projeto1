@@ -1,17 +1,20 @@
 clc,clear
+load('groelandia.dat');
 for i = 0:20
    x(i+1)=i*0.05;
    b(i+1,1)=exp(sin(6*i*0.05));
 endfor
 A=vander(x,11);
-%M�todo 1 Cholesky
+%A=vander(groelandia(1:183,1)-2002.29,21);
+%b=groelandia(:,2);
+%Método 1 Cholesky
 R1=chol(A'*A);
 opts.LT=true;
 y=linsolve(R1',A'*b,opts);
 opts2.UT=true;
 c1=linsolve(R1,y,opts2);
 
-%M�todo 2 QR condensada
+%Método 2 QR condensada
 V=A'*A;
 for j=1:11
   for i=1:j-1
@@ -28,11 +31,28 @@ for j=1:11
 endfor
 c2=linsolve(R2, Q1'*A'*b,opts2);
 
-%M�todo 3 QR completa
+%Método 3 QR completa
 [Q,R3] = qr(A'*A);
 c3=linsolve(R3, Q'*A'*b,opts2);
 
-%Compara��o
+%Comparação
 a1=0.5*norm(A*c1-b)^2
 a2=0.5*norm(A*c2-b)^2
 a3=0.5*norm(A*c3-b)^2
+
+%Numero de condicao
+k=cond(A'*A)
+
+%Graficos
+plot(x,exp(sin(6*x))-polyval(c1,x))
+xlabel('x_k')
+ylabel('Diferença entre f(x) e o polinônimo encontrado')
+title('Método 1')
+plot(x,exp(sin(6*x))-polyval(c2,x))
+xlabel('x_k')
+ylabel('Diferença entre f(x) e o polinônimo encontrado')
+title('Método 2')
+plot(x,exp(sin(6*x))-polyval(c3,x))
+xlabel('x_k')
+ylabel('Diferença entre f(x) e o polinônimo encontrado')
+title('Método 3')
